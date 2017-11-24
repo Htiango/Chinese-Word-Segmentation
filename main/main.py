@@ -25,9 +25,27 @@ def get_feature(path):
     corpus_dict, index_dict = generate_dict(lines)
     corpus_end = time.time()
     print("Generate Corpus time is " + str(corpus_end - corpus_start))
+    X_train, Y_train = extracting(lines, corpus_dict)
+    print()
+    np.save("../output/trainY", Y_train)
+    save_sparse_csr("../output/trainX", X_train)
+    save_obj("../output/corpus.pkl", corpus_dict)
+    save_obj("../output/index.pkl", index_dict)
+    end = time.time()
+    print("Running time: " + str(end - start))
+
+
+def extracting(lines, corpus_dict):
+    """
+    extract feature using raw text and corpus
+    :param lines:
+    :param corpus_dict:
+    :return: sparse matrix X train and array Y
+    """
     X_train_col = []
     X_train_row = []
     Y_train = []
+    unhandle_lines=[]
     counter = 0
     feature_start = time.time()
     for line in lines:
@@ -39,12 +57,13 @@ def get_feature(path):
             print("Finish line-" + str(counter) + ", spend time: " + str(feature_end - feature_start))
             feature_start = time.time()
         if X is None and Y is None:
+            unhandle_lines.append(line)
             continue
         else:
             col_num = len(X)
             col_num_all = len(X_train_col)
             for i in range(col_num):
-                X_train_row.append([i + col_num_all]*FEATURE_NUM)
+                X_train_row.append([i + col_num_all] * FEATURE_NUM)
             X_train_col.extend(X)
             Y_train.extend(Y)
 
@@ -57,14 +76,8 @@ def get_feature(path):
 
     X_train = sparse.csr_matrix((data, (row, col)), shape=(n_samples, len(corpus_dict)))
     Y_train = np.array(Y_train)
+    return X_train, Y_train, unhandle_lines
 
-    print()
-    np.save("../output/trainY", Y_train)
-    save_sparse_csr("../output/trainX", X_train)
-    save_obj("../output/corpus.pkl", corpus_dict)
-    save_obj("../output/index.pkl", index_dict)
-    end = time.time()
-    print("Running time: " + str(end - start))
 
 
 def save_obj(filename, items):
@@ -90,7 +103,7 @@ def load_sparse_csr(filename):
 
 def get_sparse_matrix(space_index, line, corpus_dict):
     """
-    get the sparse matrix's col and row of each lines
+    get the sparse matrix's col of each lines
     :param space_index:
     :param line:
     :param corpus_dict:
@@ -105,6 +118,8 @@ def get_sparse_matrix(space_index, line, corpus_dict):
         if i + 1 in space_index:
             label = 1
         sparse_matrix_col = get_vector(s, corpus_dict)
+        if not sparse_matrix_col:
+            return None, None
         if X is None and Y is None:
             X = [sparse_matrix_col]
             Y = [label]
@@ -124,21 +139,23 @@ def get_vector(s, corpus_dict):
     if len(s) != 4:
         print("Error in length!")
         return False
-    v1 = s[0:2]
-    index1 = corpus_dict[v1]
-    v2 = s[1]
-    index2 = corpus_dict[v2]
-    v3 = s[1:3]
-    index3 = corpus_dict[v3]
-    v4 = s[2]
-    index4 = corpus_dict[v4]
-    v5 = s[2:4]
-    index5 = corpus_dict[v5]
-    # row = np.array([0, 0, 0, 0, 0])
-    col = [index1, index2, index3, index4, index5]
-    # data = np.array([1, 1, 1, 1, 1])
-    # mtx = sparse.csr_matrix((data, (row, col)), shape=(1, len(corpus_dict)))
-    return col
+    try:
+        v1 = s[0:2]
+        index1 = corpus_dict[v1]
+        v2 = s[1]
+        index2 = corpus_dict[v2]
+        v3 = s[1:3]
+        index3 = corpus_dict[v3]
+        v4 = s[2]
+        index4 = corpus_dict[v4]
+        v5 = s[2:4]
+        index5 = corpus_dict[v5]
+        col = [index1, index2, index3, index4, index5]
+        return col
+    except:
+        print("We can't handle " + s)
+        return False
+
 
 
 def get_space_index(s):
@@ -201,7 +218,11 @@ def read_convert(path):
     return lines
 
 
-def get_model(path):
+def get_model():
+    """
+    generate the LR model and save to file
+    :return:
+    """
     start = time.time()
     X_train = load_sparse_csr("../output/trainX.npz")
     Y_train = np.load("../output/trainY.npy")
@@ -232,8 +253,28 @@ def get_model(path):
     print("Total time: " + str(end-start))
 
 
+def get_prediction(path):
+    start = time.time()
+    model = load_obj("../output/LRmodel.pkl")
+    corpus_dict = load_obj("../output/corpus.pkl")
+    index_dict = load_obj("../output/index.pkl")
+    print("Load Successfully!")
+    read_start = time.time()
+    lines = read_convert(path)
+    read_end = time.time()
+
+    X_test, Y_test, unhandle_lines = extracting(lines, corpus_dict)
+
+    predict_start = time.time()
+    Y_predict = model.predict(X_test)
+    predict_end = time.time()
+    print("Finish predict, spend time: " + str(predict_end - predict_start))
+
+
+
 if __name__ == '__main__':
     path_train = '../data/training.txt'
     path_test = '../data/test.txt'
     # get_feature(path_train)
-    get_model(path_test)
+    # get_model()
+    get_prediction(path_test)

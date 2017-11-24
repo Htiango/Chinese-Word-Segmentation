@@ -1,6 +1,8 @@
 # Chinese-Word-Segmentation
 Implement a Chinese Word Segmentation Method based on paper [A Realistic and Robust Model for Chinese Word Segmentation](http://www.aclweb.org/anthology/O08-1009). Extract features and labels from training data and use LogicRegression to train a classification model. And then do prediction on testing set and get the accuracy of this segmentation method.
 
+In this project, I get a 89.542% accuracy of segmentation on test set, covering 99.79% of the testing data
+
 ## Introduction
 The intuition behind this technique is to look at 4 consecutive (non-space) characters, or 4-grams, along with a learned model to guess whether or not there should be a word separation between the middle two characters. 
 
@@ -10,7 +12,7 @@ Suppose we have a 4-gram of Chinese characters that we’ll represent by the let
 
 I set each 1-gram and 2-gram to be a dimension in feature vector. So each feature vector's dimension should be the same as the size of corpus I build. Then I use sparse matrix to represent each feature vector because only 5 dimensions are non-zero. 
 
-The way generate a sparse is shown as following:
+The way generating a sparse is shown as following:
 
 ```python
 row = np.array([0, 2, 3, 1, 0])
@@ -21,8 +23,7 @@ mtx = sparse.csr_matrix((data, (row, col)), shape=(4, 50))
 
 In this way, the training feature X_train is a *(n_samples, corpus_size)* sparse matrix, while the labeling Y_train is a *n_samples* array. 
 
-Here I use LogicRegression to train the model and get a 89.542% accuracy of segmentation on test set, covering 99.79% of the testing data.
-
+Here I use LogicRegression to train the model.
 
 ## Process
 The process can be listed as follows:
@@ -69,7 +70,7 @@ If I ignore both the 1-gram and 2-gram errors, the accuracy can rise up to 91.26
 
 
 ## DataSet
-The training data is in a file named training.txt. This file contains 745,817 lines of segmented Chinese words; each word is separated by two space characters. While the testing file contains 1398 lines of segmented Chinese words. Both the training and test file is encode in *big5hkscs*. 
+The training data is in a file named 'training.txt'. This file contains 745,817 lines of segmented Chinese words; each word is separated by two space characters. While the testing file contains 1398 lines of segmented Chinese words and named 'test.txt'. Both the training and test file is encode in *big5hkscs*. 
 
 While reading from file, I have to ignore the *UnicodeDecodeError* since there exist some unknown encode type.
 

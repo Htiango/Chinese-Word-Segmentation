@@ -25,7 +25,7 @@ def get_feature(path):
     corpus_dict, index_dict = generate_dict(lines)
     corpus_end = time.time()
     print("Generate Corpus time is " + str(corpus_end - corpus_start))
-    X_train, Y_train = extracting(lines, corpus_dict)
+    X_train, Y_train, unhandle_lines = extracting(lines, corpus_dict)
     print()
     np.save("../output/trainY", Y_train)
     save_sparse_csr("../output/trainX", X_train)
@@ -289,6 +289,6 @@ def get_prediction(path):
 if __name__ == '__main__':
     path_train = '../data/training.txt'
     path_test = '../data/test.txt'
-    # get_feature(path_train)
+    get_feature(path_train)
     # get_model()
-    get_prediction(path_test)
+    # get_prediction(path_test)

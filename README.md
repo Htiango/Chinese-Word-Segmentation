@@ -28,36 +28,39 @@ Here I use LogicRegression to train the model.
 ## Process
 The process can be listed as follows:
 
-+ Generate Corpus
++ Generate Corpus *(About 10 second)*
     + Read from training file, convert to utf-8 and get a list of each convertible line. (Ignore the *UnicodeDecodeError*)
-    + Use the training data to generate a corpus of all the 1-gram and 2-gram words. (Remove spaces) 
+    + Use the training data to generate a corpus of all the 1-gram and 2-gram words. (Remove spaces) *(9.5 seconds)*
     +  In order to handle the first 2 and last 2 words, here I use a tricky method: Remain the '\n' in the end and add a '\t' in the beginning of each line. 
-+ Get the training features and labels
++ Get the training features and labels  *(About 70 seconds)*
     + Remove all the separate mark (spaces) and get a list of indexes where there should be a separate mark behind. 
     + Use the index list to set the label.
     + generate the row (represent index in n_sample) and col (represent the index in corpus). In order to speed up feature generating, here I use list to contain the row and col. 
     + Use the method introduced above to generate a sparse matrix, get the feature X_train. Also get the labels Y_train
     + Save features and their relative labels into files. Also save the corpus into a file.
-+ Train a LogicRegression Model
++ Train a LogicRegression Model *(more than 1000 seconds)*
     + Load features and their relative labels from files, use the *LogisticRegression* from *sklearn.linear_model*
     + Save the model into file
-+ Predict on testing set
++ Predict on testing set *(less than 2 seconds)*
     + Load model, corpus from files
     + Read from testing file, convert to utf-8 and get a list of each convertible line.
     + Use the same method as the training stage to generate testing features and the ground-truth labels. 
         + KeyError will be raised when test file has some 1-gram and 2-gram not in corpus. Most of errors come from 2-gram words and I can handle them by using a 1-gram to replace the 2-gram. However, I can't handle the error when 1-gram not in corpus. In the program, I just skip the lines where there are some 1-grams not recorded by corpus. (Fortunately 1-gram missing is very rare and we are able to handle them manually)
     + Use the model we trained to get the predicted model, compare with the ground-truth and get the accuracy.
 
+*All the time illustrated above is measured on my  MacBook Pro (Retina, 13-inch, Late 2013), 2.4 GHz Intel Core i5 and 8 GB 1600 MHz DDR3*
+
+
 ## Structure
 In 'main/main.py', use 3 functions to finish all the processes listed above:
 
-+ **get_feature**: generate the corpus, training features/labels and save them to files.
-+ **get_model**: train the LR model and save
-+ **get_prediction**: get the accuracy and print to the console
++ **get_feature**: generate the corpus, training features/labels and save them to files. 
++ **get_model**: train the LR model and save. 
++ **get_prediction**: get the accuracy and print to the console. 
 
-The training and testing data files are in the 'data/' directory. 
+The training and testing data files are in the 'data/' directory. Both the training and test file is encode in *big5hkscs*. 
 
-The saving files of training features and labels, the corpus, the model are in the 'output/' directory.  
+The saving files of training features and labels, the corpus, the model are in the 'output/' directory.  (You should create this directory before you run)
 
 ## Result
 From the whole 1398 lines in the testing file, there are 3 lines we can't handle. Because they have the characters '.' and '洴' not showing up in the training data set. 
@@ -68,11 +71,6 @@ If I ignore both the 1-gram and 2-gram errors, the accuracy can rise up to 91.26
 
 *The way to handle the 2-gram error is shown in Process*
 
-
-## DataSet
-The training data is in a file named 'training.txt'. This file contains 745,817 lines of segmented Chinese words; each word is separated by two space characters. While the testing file contains 1398 lines of segmented Chinese words and named 'test.txt'. Both the training and test file is encode in *big5hkscs*. 
-
-While reading from file, I have to ignore the *UnicodeDecodeError* since there exist some unknown encode type.
 
 ## Environment
 Python 3.6.2

@@ -1,11 +1,18 @@
 import numpy as np
 from scipy import sparse
 import time
+import pickle
 
 CON_NUM = 4
 FEATURE_NUM = 5
 
-def get_seg(path):
+
+def get_feature(path):
+    """
+    generate the corpus and the features
+    :param path: the input training path
+    :return:
+    """
     start = time.time()
     read_start = time.time()
     lines = read_convert(path)
@@ -52,8 +59,20 @@ def get_seg(path):
     print()
     np.save("../output/trainY", Y_train)
     save_sparse_csr("../output/trainX", X_train)
+    save_obj("../output/corpus.pkl", corpus_dict)
+    save_obj("../output/index.pkl", index_dict)
     end = time.time()
     print("Running time: " + str(end - start))
+
+
+def save_obj(filename, items):
+    with open(filename, 'wb') as f:
+        pickle.dump(items, f, pickle.HIGHEST_PROTOCOL)
+
+
+def load_obj(filename):
+    with open(filename, 'rb') as f:
+        return pickle.load(f)
 
 
 def save_sparse_csr(filename, array):
@@ -179,6 +198,8 @@ def read_convert(path):
     return lines
 
 
+
+
 if __name__ == '__main__':
     path = '../data/training.txt'
-    get_seg(path)
+    # get_feature(path)

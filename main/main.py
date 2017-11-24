@@ -3,7 +3,7 @@ from scipy import sparse
 import time
 
 CON_NUM = 4
-
+FEATURE_NUM = 5
 
 def get_seg(path):
     start = time.time()
@@ -16,26 +16,38 @@ def get_seg(path):
     corpus_dict, index_dict = generate_dict(lines)
     corpus_end = time.time()
     print("Generate Corpus time is " + str(corpus_end - corpus_start))
-    X_train = None
-    Y_train = None
+    X_train_col = []
+    X_train_row = []
+    Y_train = []
     counter = 0
     feature_start = time.time()
     for line in lines:
         counter += 1
         space_index = get_space_index(line)
         X, Y = get_sparse_matrix(space_index, line, corpus_dict)
-        if X is None and Y is None:
-            continue
-        if X_train is None and Y_train is None:
-            X_train = X
-            Y_train = Y
-        else:
-            X_train = sparse.vstack([X_train, X])
-            Y_train = np.append(Y_train, Y)
-        if counter % 1000 == 0:
+        if counter % 10000 == 0:
             feature_end = time.time()
             print("Finish line-" + str(counter) + ", spend time: " + str(feature_end - feature_start))
             feature_start = time.time()
+        if X is None and Y is None:
+            continue
+        else:
+            col_num = len(X)
+            col_num_all = len(X_train_col)
+            for i in range(col_num):
+                X_train_row.append([i + col_num_all]*FEATURE_NUM)
+            X_train_col.extend(X)
+            Y_train.extend(Y)
+
+    n_samples = len(X_train_col)
+    n_features = FEATURE_NUM
+    data = np.ones(n_samples * n_features, dtype=np.int64)
+
+    row = np.reshape(np.array(X_train_row), n_samples * n_features)
+    col = np.reshape(np.array(X_train_col), n_samples * n_features)
+
+    X_train = sparse.csr_matrix((data, (row, col)), shape=(n_samples, len(corpus_dict)))
+    Y_train = np.array(Y_train)
 
     print()
     np.save("../output/trainY", Y_train)
@@ -44,19 +56,20 @@ def get_seg(path):
     print("Running time: " + str(end - start))
 
 
-def save_sparse_csr(filename,array):
-    np.savez(filename,data = array.data ,indices=array.indices,
-             indptr =array.indptr, shape=array.shape )
+def save_sparse_csr(filename, array):
+    np.savez(filename, data=array.data, indices=array.indices,
+             indptr=array.indptr, shape=array.shape)
+
 
 def load_sparse_csr(filename):
     loader = np.load(filename)
-    return sparse.csr_matrix((  loader['data'], loader['indices'], loader['indptr']),
-                         shape = loader['shape'])
+    return sparse.csr_matrix((loader['data'], loader['indices'], loader['indptr']),
+                             shape=loader['shape'])
 
 
 def get_sparse_matrix(space_index, line, corpus_dict):
     """
-    get the sparse matrix of each lines
+    get the sparse matrix's col and row of each lines
     :param space_index:
     :param line:
     :param corpus_dict:
@@ -66,24 +79,23 @@ def get_sparse_matrix(space_index, line, corpus_dict):
     X = None
     Y = None
     for i in range(len(line_consecutive) - CON_NUM + 1):
-        s = line_consecutive[i: i+4]
+        s = line_consecutive[i: i + 4]
         label = 0
-        if i+1 in space_index:
+        if i + 1 in space_index:
             label = 1
-        label_arr = np.array([label])
-        sparse_matrix =get_vector(s, corpus_dict)
+        sparse_matrix_col = get_vector(s, corpus_dict)
         if X is None and Y is None:
-            X = sparse_matrix
-            Y = label_arr
+            X = [sparse_matrix_col]
+            Y = [label]
         else:
-            X = sparse.vstack([X, sparse_matrix])
-            Y = np.append(Y, label_arr)
+            X.append(sparse_matrix_col)
+            Y.append(label)
     return X, Y
 
 
 def get_vector(s, corpus_dict):
     """
-    get a sparse matrix
+    get a sparse matrix's col index
     :param s:
     :param corpus_dict:
     :return: a sparse matrix array-like
@@ -101,11 +113,11 @@ def get_vector(s, corpus_dict):
     index4 = corpus_dict[v4]
     v5 = s[2:4]
     index5 = corpus_dict[v5]
-    row = np.array([0, 0, 0, 0, 0])
-    col = np.array([index1, index2, index3, index4, index5])
-    data = np.array([1, 1, 1, 1, 1])
-    mtx = sparse.csr_matrix((data, (row, col)), shape=(1, len(corpus_dict)))
-    return mtx
+    # row = np.array([0, 0, 0, 0, 0])
+    col = [index1, index2, index3, index4, index5]
+    # data = np.array([1, 1, 1, 1, 1])
+    # mtx = sparse.csr_matrix((data, (row, col)), shape=(1, len(corpus_dict)))
+    return col
 
 
 def get_space_index(s):
@@ -121,7 +133,7 @@ def get_space_index(s):
         result.append(index)
     result.pop(-1)
     result.pop(0)
-    return result
+    return set(result)
 
 
 def generate_dict(lines):
@@ -149,7 +161,6 @@ def generate_dict(lines):
                 corpus_index += 1
     print("corpus length is " + str(len(corpus_dict)))
     return corpus_dict, index_dict
-
 
 
 def read_convert(path):

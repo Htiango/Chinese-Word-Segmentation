@@ -141,15 +141,31 @@ def get_vector(s, corpus_dict):
         return False
     try:
         v1 = s[0:2]
-        index1 = corpus_dict[v1]
         v2 = s[1]
-        index2 = corpus_dict[v2]
         v3 = s[1:3]
-        index3 = corpus_dict[v3]
         v4 = s[2]
-        index4 = corpus_dict[v4]
         v5 = s[2:4]
-        index5 = corpus_dict[v5]
+        # index1 = corpus_dict[v1]
+        # index2 = corpus_dict[v2]
+        # index3 = corpus_dict[v3]
+        # index4 = corpus_dict[v4]
+        # index5 = corpus_dict[v5]
+
+        if v1 in corpus_dict:
+            index1 = corpus_dict[v1]
+        else:
+            index1 = corpus_dict[v2]
+        index2 = corpus_dict[v2]
+        if v3 in corpus_dict:
+            index3 = corpus_dict[v3]
+        else:
+            index3 = corpus_dict[v4]
+        index4 = corpus_dict[v4]
+        if v5 in corpus_dict:
+            index5 = corpus_dict[v5]
+        else:
+            index5 = corpus_dict[v4]
+
         col = [index1, index2, index3, index4, index5]
         return col
     except:
@@ -226,20 +242,7 @@ def get_model():
     start = time.time()
     X_train = load_sparse_csr("../output/trainX.npz")
     Y_train = np.load("../output/trainY.npy")
-    # corpus_dict = load_obj("../output/corpus.pkl")
-    # index_dict = load_obj("../output/index.pkl")
     print("Load Successfully!")
-    # read_start = time.time()
-    # lines = read_convert(path)
-    # read_end = time.time()
-
-    # print("start training SVM Model.....")
-    # train_start = time.time()
-    # svmModel = svm.SVC()
-    # svmModel.fit(X_train, Y_train)
-    # train_end = time.time()
-    # print("Get svm model, spend time: " + str(train_end - train_start))
-    # save_obj("../output/svmModel.pkl", svmModel)
 
     print("start training LR Model.....")
     train_start = time.time()
@@ -269,6 +272,17 @@ def get_prediction(path):
     Y_predict = model.predict(X_test)
     predict_end = time.time()
     print("Finish predict, spend time: " + str(predict_end - predict_start))
+    result = np.subtract(Y_predict, Y_test)
+    error = np.count_nonzero(result)
+    total = np.shape(result)[0]
+
+    print("Total number of 2-gram is: " + str(total))
+    print("Error number is: " + str(error))
+    accuracy = 1.0 * (total - error) / total
+    print("Accuracy is: " + str(accuracy))
+
+    end = time.time()
+    print("Finish, spend time: " + str(end - start))
 
 
 

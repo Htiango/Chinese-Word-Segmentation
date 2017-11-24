@@ -2,6 +2,8 @@ import numpy as np
 from scipy import sparse
 import time
 import pickle
+from sklearn.linear_model import LogisticRegression
+from sklearn import svm
 
 CON_NUM = 4
 FEATURE_NUM = 5
@@ -198,8 +200,39 @@ def read_convert(path):
     return lines
 
 
+def get_model(path):
+    start = time.time()
+    X_train = load_sparse_csr("../output/trainX.npz")
+    Y_train = np.load("../output/trainY.npy")
+    # corpus_dict = load_obj("../output/corpus.pkl")
+    # index_dict = load_obj("../output/index.pkl")
+    print("Load Successfully!")
+    # read_start = time.time()
+    # lines = read_convert(path)
+    # read_end = time.time()
+
+    # print("start training SVM Model.....")
+    # train_start = time.time()
+    # svmModel = svm.SVC()
+    # svmModel.fit(X_train, Y_train)
+    # train_end = time.time()
+    # print("Get svm model, spend time: " + str(train_end - train_start))
+    # save_obj("../output/svmModel.pkl", svmModel)
+
+    print("start training LR Model.....")
+    train_start = time.time()
+    lrModel = LogisticRegression(penalty='l2')
+    lrModel.fit(X_train, Y_train)
+    train_end = time.time()
+    print("Get LR model, spend time: " + str(train_end-train_start))
+    save_obj("../output/LRModel.pkl", lrModel)
+
+    end = time.time()
+    print("Total time: " + str(end-start))
 
 
 if __name__ == '__main__':
-    path = '../data/training.txt'
-    # get_feature(path)
+    path_train = '../data/training.txt'
+    path_test = '../data/test.txt'
+    # get_feature(path_train)
+    get_model(path_test)

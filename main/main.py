@@ -194,7 +194,8 @@ def read_convert(path):
     lines = []
     with open(path, encoding=encoding, errors='ignore') as f:
         for line in f:
-            line = line.strip('\n')
+            # line = line.strip('\n')
+            line = '\t' + line
             lines.append(line)
     print("There are lines: " + str(len(lines)))
     return lines

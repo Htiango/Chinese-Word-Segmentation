@@ -21,6 +21,7 @@ mtx = sparse.csr_matrix((data, (row, col)), shape=(4, 50))
 
 In this way, the training feature X_train is a *(n_samples, corpus_size)* sparse matrix, while the labeling Y_train is a *n_samples* array. 
 
+Here I use LogicRegression to train the model and get a 89.542% accuracy of segmentation on test set, covering 99.79% of the testing data.
 
 
 ## Process
